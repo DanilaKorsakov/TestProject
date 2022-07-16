@@ -1,5 +1,5 @@
 const path = require('path');
-const { VueLoaderPlugin } = require('vue-loader')
+const { VueLoaderPlugin } = require('vue-loader');
 module.exports = {
     entry: path.join(__dirname,'src','index.js'),
     output: {
@@ -24,6 +24,14 @@ module.exports = {
                 test: /\.css$/,
                 loader: 'css-loader'
             },
+            {
+                test: /\.s[ac]ss$/i,
+                use: [
+                    "style-loader",
+                    "css-loader",
+                    "sass-loader",
+                ],
+            }
         ]
     },
     plugins: [
