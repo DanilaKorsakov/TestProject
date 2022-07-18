@@ -1,38 +1,44 @@
 <template>
-    <button :class="{active:isActive}" class="btn" @click="GoToNextFlor">
+    <button :class="{active:isActive}" class="btn" @click="goToNextFloor">
         <div class="btn__content"></div>
     </button>
 </template>
 
 <script>
-    export default  {
+    import { ref, defineComponent } from "vue";
+    export default defineComponent ( {
         name: 'Btn',
-        data (){
+        props:['index'],
+        setup: function(props,{emit}){
+            const isActive = ref(false);
+            const  goToNextFloor = ()=>{
+                isActive.value=true;
+                emit('index-change',props.index);
+            };
             return {
-                isActive:false
-            }
+                isActive,
+                goToNextFloor
+            };
         },
-        methods: {
-            GoToNextFlor (){
-                this.isActive=true;
-            }
-        },
-    }
+    })
 </script>
 
 <style lang="scss">
     .btn{
-        width: 30px;
-        height: 30px;
+        width: 40px;
+        height: 40px;
         border: 1px solid #87CEEB;
-        margin: 40px 0 0 200px;
+        margin: 10px 0 0 200px;
         background: none;
         border-radius: 5px;
         cursor: pointer;
         transition: 0.3s ease-in-out;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         &__content{
-            width: 17px;
-            height: 17px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             border: 2px solid #87CEEB;
             box-sizing: border-box;
