@@ -13,6 +13,7 @@
         components:{
             Btn
         },
+        props:['animation-end'],
         setup: function(props,{emit}) {
             const floorArray= ref([1,2,3,4,5]);
             const floorRef = ref('1');

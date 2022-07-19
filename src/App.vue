@@ -1,9 +1,9 @@
 <template>
     <div class="emulator">
         <div class="emulator__horizontal-lines">
-            <Elevator  ref="elevator"></Elevator>
+            <Elevator :floor="floors" ref="elevator"></Elevator>
         </div>
-        <Floor @floor-height="floorHeight" @change-floor="changeFloor"/>
+        <Floor @floor-height="floorHeight"  @change-floor="changeFloor"></Floor>
     </div>
 </template>
 
@@ -21,25 +21,47 @@
             const floors = ref([]);
             const elevator = ref('');
             const height = ref ('');
+            const animationTime = ref(0);
+            const prevFloor = ref(0);
+            const floor = ref('');
             const changeFloor = (floorIndex)=>{
-                floors.value.push(floorIndex);
-                console.log(floors.value);
+                    if(floors.value.length<1){
+                        floors.value.push(floorIndex);
+                    }else{
+                        if(!floors.value.includes(floorIndex)){
+                            floors.value.push(floorIndex);
+                        }
+                    }
             };
             const floorHeight = (elevatorHeight)=>{
                 height.value = elevatorHeight;
                 elevator.value.$el.style.height=height.value+'px';
             };
             watch(floors.value, () => {
+                    if(prevFloor.value===0){
+                        animationTime.value = floors.value[0]-1;
+                    }else if(prevFloor.value>floors.value[0]){
+                        animationTime.value = prevFloor.value-floors.value[0];
+                    }else{
+                        animationTime.value = floors.value[0]-prevFloor.value;
+                    }
                     elevator.value.$el.style.transform  = 'translateY( ' + (-height.value*(floors.value[0]-1)) + 'px)';
-                    elevator.value.$el.style.transition = 'all ' + ( floors.value[0]-1) +  's ease-in-out';
-            }, { deep: true }
-            );
+                    elevator.value.$el.style.transition = 'all ' + (animationTime.value) +  's ease-in-out';
+                    if(floors.value.length!==0){
+                        prevFloor.value=floors.value[0];
+                    }
+            }, { deep: true });
+            // watch(endTransition.value,()=>{
+            //     console.log(floor.value);
+            // });
             return {
                 floors,
-                floorHeight,
                 elevator,
+                animationTime,
+                prevFloor,
+                floor,
+                floorHeight,
                 changeFloor,
-                floorHeight
             }
         },
     })
