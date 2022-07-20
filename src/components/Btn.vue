@@ -1,30 +1,42 @@
 <template>
-    <button :class="{active:isActive}" class="btn" @click="goToNextFloor">
+    <button :class="{ 'active': active }"
+            class="btn"
+            @click="callElevator">
         <div class="btn__content"></div>
     </button>
 </template>
 
 <script>
-    import { ref, defineComponent } from "vue";
-    export default defineComponent ( {
+    import { defineComponent } from 'vue';
+
+    export default defineComponent({
         name: 'Btn',
-        props:['index'],
-        setup: function(props,{emit}){
-            const isActive = ref(false);
-            const  goToNextFloor = ()=>{
-                isActive.value=true;
-                emit('index-change',props.index);
+
+        props: {
+            active: {
+                type: Boolean,
+                default: false,
+                required: true
+            }
+        },
+
+        setup: function (props, {emit}) {
+
+            const callElevator = () => {
+                if (!props.active.value) {
+                    emit('call-elevator');
+                }
             };
+
             return {
-                isActive,
-                goToNextFloor
+                callElevator
             };
         },
     })
 </script>
 
 <style lang="scss">
-    .btn{
+    .btn {
         width: 40px;
         height: 40px;
         border: 1px solid #87CEEB;
@@ -36,7 +48,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        &__content{
+
+        &__content {
             width: 20px;
             height: 20px;
             border-radius: 50%;
@@ -48,9 +61,10 @@
             position: relative;
             transition: 0.3s ease-in-out;
         }
-        &__content::after{
+
+        &__content::after {
             content: '';
-            background-color:#87CEEB;
+            background-color: #87CEEB;
             width: 10px;
             height: 10px;
             box-sizing: border-box;
@@ -63,14 +77,17 @@
             transition: 0.3s ease-in-out;
         }
     }
-    .active{
+
+    .active {
         border: 1px solid #FFA500;
-        .btn{
-            &__content{
+
+        .btn {
+            &__content {
                 border: 2px solid #FFA500;
             }
-            &__content::after{
-                background-color:#FFA500;
+
+            &__content::after {
+                background-color: #FFA500;
             }
         }
     }

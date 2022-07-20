@@ -1,77 +1,143 @@
 <template>
     <div class="emulator">
         <div class="emulator__horizontal-lines">
-            <Elevator :floor="floors" ref="elevator"></Elevator>
+            <Elevator :queue="queue" ref="elevator"
+                      :prev-floor="prevFloor"
+                      @elevator:arrived="onElevatorArrived"
+                      @elevator:ready="onElevatorReady"
+            />
         </div>
-        <Floor @floor-height="floorHeight"  @change-floor="changeFloor"></Floor>
+        <Floors :floors="floors"
+                @floor-height="floorHeight"
+                @change-floor="changeFloor"/>
     </div>
 </template>
 
 <script>
-    import { ComputedRef, defineComponent, ref, Ref, watch } from 'vue';
-    import Elevator from "./components/Elevator.vue";
-    import Floor from "./components/Floor.vue";
-    export default defineComponent ( {
+    import {defineComponent, onMounted, ref, watch} from 'vue';
+    import Elevator from './components/Elevator.vue';
+    import Floors from './components/Floors.vue';
+
+    export default defineComponent({
         name: 'App',
         components: {
             Elevator,
-            Floor,
+            Floors,
         },
-        setup: function(props, {emit}) {
+        setup: function () {
+
+            const state = {
+                currentFloor: window.localStorage.getItem('currentFloor') || 0
+            };
+
+            const elevator = ref(null);
+            const height = ref('');
+            const queue = ref([]);
+
             const floors = ref([]);
-            const elevator = ref('');
-            const height = ref ('');
-            const animationTime = ref(0);
-            const prevFloor = ref(0);
-            const floor = ref('');
-            const changeFloor = (floorIndex)=>{
-                    if(floors.value.length<1){
-                        floors.value.push(floorIndex);
-                    }else{
-                        if(!floors.value.includes(floorIndex)){
-                            floors.value.push(floorIndex);
-                        }
-                    }
+            const currentFloor = ref(parseInt(state.currentFloor));
+
+            const floorsCount = 5;
+            const prevFloor = ref(parseInt(state.currentFloor));
+
+            const changeFloor = (floorNumber) => {
+                currentFloor.value = floorNumber;
             };
-            const floorHeight = (elevatorHeight)=>{
+
+            const floorHeight = (elevatorHeight) => {
+
+                if (height.value) {
+                    return
+                }
+
                 height.value = elevatorHeight;
-                elevator.value.$el.style.height=height.value+'px';
+                elevator.value.$el.style.height = elevatorHeight + 'px';
+
+                const floor = floors.value.find(f => f.number === parseInt(state.currentFloor));
+
+                if (floor) {
+                    elevator.value.$el.style.transform = `translateY( ${(-height.value * (floor.number - 1))}px)`;
+                }
             };
-            watch(floors.value, () => {
-                    if(prevFloor.value===0){
-                        animationTime.value = floors.value[0]-1;
-                    }else if(prevFloor.value>floors.value[0]){
-                        animationTime.value = prevFloor.value-floors.value[0];
-                    }else{
-                        animationTime.value = floors.value[0]-prevFloor.value;
+
+            const onQueueUpdated = () => {
+                if (queue.value.length === 0) {
+                    return
+                }
+
+                const floor = floors.value.find(f => f.number === queue.value[0]);
+
+                if (!floor) {
+                    return
+                }
+
+                elevator.value.$el.style.transition = `all ${Math.abs(prevFloor.value - queue.value[0])}s linear`;
+                elevator.value.$el.style.transform = `translateY( ${(-height.value * (queue.value[0] - 1))}px)`;
+            };
+
+            const onCurrentFloorUpdated = () => {
+                const alreadyInQueue = queue.value.includes(currentFloor.value, 0);
+
+                if (!alreadyInQueue) {
+                    queue.value.push(currentFloor.value);
+
+                    const floor = floors.value.find(f => f.number === currentFloor.value);
+
+                    if (floor) {
+                        floor.active = true;
                     }
-                    elevator.value.$el.style.transform  = 'translateY( ' + (-height.value*(floors.value[0]-1)) + 'px)';
-                    elevator.value.$el.style.transition = 'all ' + (animationTime.value) +  's ease-in-out';
-                    if(floors.value.length!==0){
-                        prevFloor.value=floors.value[0];
-                    }
-            }, { deep: true });
-            // watch(endTransition.value,()=>{
-            //     console.log(floor.value);
-            // });
+                }
+            }
+
+            const onElevatorArrived = () => {
+                const floor = floors.value.find(f => f.number === queue.value[0]);
+
+                if (!floor) {
+                    return
+                }
+
+                floor.active = false;
+                window.localStorage.setItem('currentFloor', floor.number);
+            };
+
+            const onElevatorReady = () => {
+                prevFloor.value = queue.value[0];
+                queue.value.shift();
+            };
+
+            watch(queue.value, onQueueUpdated);
+            watch(currentFloor, onCurrentFloorUpdated);
+
+            onMounted(() => {
+
+                for (let i = floorsCount; i > 0; i--) {
+                    floors.value.push({
+                        number: i,
+                        active: false
+                    });
+                }
+
+            });
+
             return {
+                queue,
                 floors,
                 elevator,
-                animationTime,
                 prevFloor,
-                floor,
+                onElevatorArrived,
+                onElevatorReady,
                 floorHeight,
-                changeFloor,
+                changeFloor
             }
         },
     })
 </script>
 
 <style lang="scss">
-    .emulator{
+    .emulator {
         position: relative;
 
-        &__horizontal-lines{
+        &__horizontal-lines {
             width: 150px;
             border: 3px solid #9c9898;
             border-top: none;
